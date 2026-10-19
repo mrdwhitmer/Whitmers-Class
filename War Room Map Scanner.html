@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>War Room Map Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e0d3b3;--card:#ece2c8;--ink:#1d1a14;--mute:#5a513f;--line:#a39569;--u:#25508a;--ubg:#cfd9e8;--c:#9b2d24;--cbg:#ecd3cc;--brass:#7d5f17;--btn:#f4ecd6;--on:#fff;--grit:.10;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14120e;--card:#1f1c16;--ink:#ebe1c8;--mute:#aa9f84;--line:#4a4333;--u:#7ca6e0;--ubg:#1b2638;--c:#e5806e;--cbg:#331f1b;--brass:#d6b25c;--btn:#2a261e;--on:#14120e;--grit:.05;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14120e;--card:#1f1c16;--ink:#ebe1c8;--mute:#aa9f84;--line:#4a4333;--u:#7ca6e0;--ubg:#1b2638;--c:#e5806e;--cbg:#331f1b;--brass:#d6b25c;--btn:#2a261e;--on:#14120e;--grit:.05;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 "Libre Baskerville",Georgia,serif}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:var(--grit);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.2 -.1'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");mix-blend-mode:multiply}
+main{max-width:980px;margin:0 auto;padding:20px 16px 56px;position:relative}
+h1,h2,.slab{font-family:"Alfa Slab One",Rockwell,Georgia,serif;font-weight:400;margin:0}
+h1{font-size:clamp(2.1rem,7vw,3.4rem);line-height:1}
+h2{font-size:1.2rem;margin-bottom:8px}
+.sub{color:var(--mute);margin:6px 0 0;max-width:60ch}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:3px double var(--line);padding-bottom:14px}
+button,select{font:inherit;color:var(--ink);cursor:pointer}
+:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.b{background:var(--btn);border:1px solid var(--line);padding:8px 14px;border-radius:2px;min-height:40px}
+.b.p{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.b:disabled{opacity:.45;cursor:not-allowed}
+.cams{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.cam{background:var(--card);border:1px solid var(--line);border-top:6px solid;padding:12px}
+.cam.u{border-top-color:var(--u)}.cam.c{border-top-color:var(--c)}
+.cam h2.u{color:var(--u)}.cam h2.c{color:var(--c)}
+.view{position:relative;background:#000;aspect-ratio:4/3;overflow:hidden;display:grid;place-items:center;color:#cdbf9b;text-align:center;font-size:.85rem}
+.view video,.view img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.view video,.view img,.frame{display:none}
+.cam.live video,.cam.live .frame,.cam.done img{display:block}
+.frame{position:absolute;pointer-events:none;border:2px dashed rgba(255,244,214,.55);box-shadow:0 0 0 999px rgba(0,0,0,.45)}
+.frame i{position:absolute;width:26px;height:26px;border:4px solid #f2d27a}
+.frame i:nth-child(1){left:-4px;top:-4px;border-right:0;border-bottom:0}.frame i:nth-child(2){right:-4px;top:-4px;border-left:0;border-bottom:0}
+.frame i:nth-child(3){left:-4px;bottom:-4px;border-right:0;border-top:0}.frame i:nth-child(4){right:-4px;bottom:-4px;border-left:0;border-top:0}
+.frame span{position:absolute;left:50%;top:-30px;transform:translateX(-50%);white-space:nowrap;color:#f2d27a;font-size:.75rem;text-shadow:0 1px 2px #000}
+.cam.live .ph,.cam.done .ph{display:none}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.flash.go{animation:fl .3s}
+@keyframes fl{from{opacity:.9}to{opacity:0}}
+.scan::after{content:"";position:absolute;left:0;right:0;height:3px;background:#f2d27a;box-shadow:0 0 14px 4px #f2d27a;animation:ln 1.6s ease-in-out infinite alternate}
+@keyframes ln{from{top:0}to{top:calc(100% - 3px)}}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cst{min-height:1.3em;font-size:.8rem;color:var(--mute);margin-top:6px}
+.opts{background:var(--card);border:1px solid var(--line);padding:10px 14px;margin-bottom:16px}
+.opts summary{cursor:pointer}
+.og{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:10px}
+.og label{display:flex;flex-direction:column;gap:3px;font-size:.85rem}
+.og input[type=text],.og select{background:var(--btn);border:1px solid var(--line);padding:7px 8px;min-height:38px;color:var(--ink);font:inherit;border-radius:2px}
+.go{display:block;width:100%;padding:16px;background:var(--c);color:var(--on);border:0;border-radius:2px;font:400 1.35rem "Alfa Slab One",Georgia,serif}
+.go:disabled{opacity:.45;cursor:not-allowed}
+.msg{min-height:1.4em;color:var(--c);font-weight:700;margin:8px 0}
+#scene{display:none;background:#0d0b08;border:1px solid var(--line);margin:16px 0;position:relative}
+#scene canvas{display:block;width:100%;height:auto}
+#scene p{position:absolute;left:0;right:0;bottom:12px;margin:0;text-align:center;color:#f2d27a;font-family:"Alfa Slab One",Georgia,serif;font-size:1.05rem;text-shadow:0 2px 4px #000}
+#scene button{position:absolute;right:10px;top:10px}
+#res{display:none;background:var(--card);border:1px solid var(--line);padding:16px;margin-top:16px}
+.meter{position:relative;height:46px;background:var(--c);border:2px solid var(--ink);overflow:visible;margin:34px 0 8px}
+.meter .bu{position:absolute;left:0;top:0;bottom:0;background:var(--u)}
+.meter .mk{position:absolute;top:-10px;bottom:-10px;width:6px;margin-left:-3px;background:var(--ink);box-shadow:0 0 0 2px var(--card)}
+.meter b{position:absolute;top:50%;transform:translateY(-50%);font-family:"Alfa Slab One",Georgia,serif;font-weight:400;color:#fff;font-size:1.2rem}
+.meter .l{left:12px}.meter .r{right:12px}
+.names{display:flex;justify-content:space-between;font-family:"Alfa Slab One",Georgia,serif}
+.names .u{color:var(--u)}.names .c{color:var(--c)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.chip{border:1px solid var(--line);padding:4px 10px;font-size:.8rem;opacity:.4;transition:opacity .3s}
+.chip.on{opacity:1}
+.chip.wu{border-color:var(--u);color:var(--u)}.chip.wc{border-color:var(--c);color:var(--c)}
+.verdict{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.stamp{font-family:"Alfa Slab One",Georgia,serif;font-size:1.8rem;line-height:1.1;padding:10px 20px;border:4px double;transform:rotate(-4deg);text-align:center;animation:slam .35s ease-out}
+.stamp small{display:block;font:400 .9rem "Libre Baskerville",serif}
+.stamp.u{color:var(--u)}.stamp.c{color:var(--c)}.stamp.d{color:var(--brass)}
+@keyframes slam{from{transform:rotate(-4deg) scale(1.6);opacity:0}to{transform:rotate(-4deg) scale(1);opacity:1}}
+.close{flex:1 1 240px;margin:0}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:8px}
+td,th{padding:6px 4px;border-bottom:1px dashed var(--line);text-align:left;vertical-align:top}
+td.n{text-align:center;white-space:nowrap}
+td.n button{width:26px;height:26px;border:1px solid var(--line);background:var(--btn);border-radius:2px;font-weight:700}
+.ev{color:var(--mute);font-size:.78rem;display:block}
+.flag{color:var(--c);font-size:.82rem;margin:4px 0}
+#real{display:none;margin-top:12px;padding:10px 14px;border-left:5px solid var(--brass);background:color-mix(in srgb,var(--brass) 12%,transparent)}
+h3{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;margin:0 0 6px;font-size:1.05rem}
+h4{margin:12px 0 4px;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.b.big{font-size:1.05rem;padding:12px 18px;min-height:48px}
+.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;margin:10px 0}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.sd{border:1px solid var(--line);border-top:5px solid;padding:12px;background:color-mix(in srgb,var(--card) 70%,transparent)}
+.sd.u{border-top-color:var(--u)}.sd.c{border-top-color:var(--c)}.sd.u h3{color:var(--u)}.sd.c h3{color:var(--c)}
+.sd p{margin:0;font-size:.88rem}.sd ul{margin:0;padding-left:18px;font-size:.85rem}
+.pcs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pc{border:1px solid var(--line);text-align:center;padding:6px 2px}
+.pc b{display:block;font-family:"Alfa Slab One",Georgia,serif;font-weight:400;font-size:1.5rem;line-height:1.1}
+.pc small{display:block;font-size:.7rem;color:var(--mute)}
+.pc.ok{border-color:var(--u)}.pc.no{border-color:var(--c)}
+.cr{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:.85rem}
+.cr .sc2{white-space:nowrap}.cr .sc2 b{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;font-size:1.15rem;margin:0 4px}
+.cr .sc2 button{width:26px;height:26px;border:1px solid var(--line);background:var(--btn);border-radius:2px;font-weight:700}
+.cr .tp{grid-column:1/-1;color:var(--mute);font-size:.78rem}.cr .tp em{color:var(--ink);font-style:normal;font-weight:700}
+.dir{display:inline-block;min-width:2.2em;text-align:center;background:var(--ink);color:var(--bg);font-size:.72rem;font-weight:700;padding:0 5px;margin-right:4px}
+u.bad,u.good{text-decoration-line:underline;text-decoration-thickness:3px;text-underline-offset:3px;font-weight:700}
+u.bad{text-decoration-color:var(--c)}u.good{text-decoration-color:var(--u)}
+.sum{margin:6px 0 4px;padding:8px 10px;background:color-mix(in srgb,var(--line) 18%,transparent)}
+.sum div{font-size:.9rem;margin:3px 0}.sum b{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;margin-right:6px;padding:1px 6px;color:var(--bg)}
+.ms b{background:var(--u)}.mp b{background:var(--c)}
+.adj{display:flex;justify-content:center;gap:4px;margin-top:3px}.adj button{width:24px;height:22px;border:1px solid var(--line);background:var(--btn);border-radius:2px;font-weight:700;line-height:1}
+@media (max-width:700px){.sides{grid-template-columns:1fr}}
+@media (max-width:700px){.cams{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.stamp,.scan::after{animation:none}}
+</style>
+</head>
+<body>
+<main>
+<div class="top">
+ <div><h1>War Room Map Scanner</h1><p class="sub">Line up each group's map with the frame, scan it, and watch the battle play out.</p></div>
+ <button class="b" id="theme" type="button">Light / dark</button>
+</div>
+
+<div class="cams">
+ <section class="cam u" id="camu"><h2 class="u">Union map</h2>
+  <div class="view"><video playsinline muted></video><img alt="Captured Union map"><div class="frame"><i></i><i></i><i></i><i></i><span>Line the map up inside the corners</span></div><div class="flash"></div><div class="ph">Tap Scan to open your camera</div></div>
+  <div class="acts"><button class="b p big" data-a="up" type="button">Scan Union map</button><button class="b" data-a="start" type="button">Live frame</button><button class="b" data-a="snap" type="button" disabled>Capture</button><button class="b" data-a="retake" type="button" disabled>Retake</button></div>
+  <input type="file" accept="image/*" capture="environment" hidden><div class="cst" role="status"></div>
+ </section>
+ <section class="cam c" id="camc"><h2 class="c">Confederate map</h2>
+  <div class="view"><video playsinline muted></video><img alt="Captured Confederate map"><div class="frame"><i></i><i></i><i></i><i></i><span>Line the map up inside the corners</span></div><div class="flash"></div><div class="ph">Tap Scan to open your camera</div></div>
+  <div class="acts"><button class="b p big" data-a="up" type="button">Scan Confederate map</button><button class="b" data-a="start" type="button">Live frame</button><button class="b" data-a="snap" type="button" disabled>Capture</button><button class="b" data-a="retake" type="button" disabled>Retake</button></div>
+  <input type="file" accept="image/*" capture="environment" hidden><div class="cst" role="status"></div>
+ </section>
+</div>
+
+<details class="opts"><summary>Optional teacher inputs</summary>
+ <div class="og">
+  <label>Battle<select id="bat"><option value="auto">Auto-detect from the map</option><option value="bull">First Bull Run (example)</option><option value="ant">Antietam</option><option value="get">Gettysburg</option><option value="vic">Vicksburg</option></select></label>
+  <label>Union group<input type="text" id="nu" placeholder="Group name"></label>
+  <label>Confederate group<input type="text" id="nc" placeholder="Group name"></label>
+  <label>Union debate score (0-4, 2 = neutral)<select id="du"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+  <label>Confederate debate score (0-4)<select id="dc"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+  <label><span><input type="checkbox" id="edge" checked> Use historical edges</span></label>
+  <label><span><input type="checkbox" id="fog" checked> Fog of war dice</span></label>
+ </div>
+</details>
+
+<label class="chk"><input type="checkbox" id="auto" checked> Analyze automatically as soon as both maps are scanned</label>
+<button class="go" id="go" type="button" disabled>Analyze both maps and fight the battle</button>
+<div class="msg" id="msg" role="status"></div>
+<div class="acts"><button class="b" id="manual" type="button">No camera? Score by hand instead</button></div>
+
+<div id="scene"><canvas width="960" height="420"></canvas><p id="stat">Unrolling the maps...</p><button class="b" id="stop" type="button">Stop</button></div>
+
+<section id="res" aria-live="polite">
+ <h2 id="rt">Battle report</h2>
+ <div class="names"><span class="u" id="lu">Union</span><span class="c" id="lc">Confederate</span></div>
+ <div class="meter" id="meter" role="img" aria-label="Win score bar"><div class="bu" id="bu"></div><b class="l" id="pu">50%</b><b class="r" id="pc">50%</b><div class="mk" id="mk"></div></div>
+ <div class="chips" id="chips"></div>
+ <div class="verdict"><div id="stamp"></div><p class="close" id="close"></p></div>
+ <div id="flags"></div>
+ <div class="sides" id="sides"></div>
+ <div class="acts"><button class="b" id="replay" type="button">Replay the battle</button><button class="b" id="reveal" type="button">Reveal what really happened</button></div>
+ <div id="real"></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const CR=['Objective and Plan','Terrain Use','Force Placement','Movement and Coordination','Using Your Advantages','Intel and Plan B'];
+const PH=[{n:'Opening Moves',i:[1,2],e:'g'},{n:'Main Clash',i:[3,0],e:'n'},{n:'Decisive Hour',i:[4,5],e:null,db:1}];
+const B={
+ bull:{n:'First Bull Run',u:{g:0,n:0},c:{g:1,n:0},x:{u:[14,1,5],c:[10,1,5]},ex:{u:0,c:2},adv:'Union: roughly equal numbers and the choice of where to attack. Confederate: the Bull Run fords to defend, and Johnston\'s army arriving by railroad.',real:'Confederate victory, July 21, 1861. The Union flank march at Sudley Ford worked at first, but Jackson held Henry House Hill, Johnston\'s men arrived by rail, and the Union retreat became a panic back to Washington.'},
+ ant:{n:'Antietam',u:{g:0,n:2},c:{g:2,n:0},x:{u:[16,2,7],c:[8,1,5]},ex:{u:0,c:2},adv:'Union: about 2 to 1 numbers, more artillery, and captured Confederate orders. Confederate: strong defensive ground west of Antietam Creek, and A.P. Hill\'s division arriving late.',real:'Union strategic victory, tactical draw, September 17, 1862. Separate Union attacks left Lee\'s line intact until A.P. Hill arrived near 4 p.m. Lee crossed the Potomac the next night. About 23,000 casualties.'},
+ get:{n:'Gettysburg',u:{g:1,n:1},c:{g:0,n:0},x:{u:[18,3,7],c:[15,2,7]},ex:{u:0,c:0},adv:'Union: more men, a compact line, and the high ground (Cemetery Hill, Culp\'s Hill, Little Round Top). Confederate: the initiative, and many roads leading into town.',real:'Union victory, July 1 to 3, 1863. Meade held Cemetery Ridge and the hills. Pickett\'s Charge failed on July 3 and Lee retreated July 4. About 51,000 casualties.'},
+ vic:{n:'Vicksburg',u:{g:0,n:2},c:{g:2,n:0},x:{u:[18,1,8],c:[8,1,7]},ex:{u:0,c:0},adv:'Union: more than 2 to 1 numbers, gunboats on the Mississippi, and supplies. Confederate: fortified bluffs, trenches, heavy river batteries, and a hoped-for relief army from Jackson.',real:'Union victory, May 18 to July 4, 1863. Assaults on May 19 and 22 failed, so Grant besieged the city. Pemberton surrendered about 29,500 men on July 4, and the Union controlled the Mississippi.'}};
+const IMG={u:null,c:null};let R=null,key='ant',ctl=null,stopScene=null,anim=0,busy=false;
+const msg=t=>{$('#msg').textContent=t};
+const nm=s=>$('#n'+s).value.trim()||(s==='u'?'Union':'Confederate');
+$('#theme').onclick=()=>{const r=document.documentElement,d=matchMedia('(prefers-color-scheme: dark)').matches,t=r.dataset.theme||(d?'dark':'light');r.dataset.theme=t==='dark'?'light':'dark'};
+
+/* ---------- camera + upload ---------- */
+const AR=1.13;
+function guide(vw,vh){let w=vw*.9,h=w/AR;if(h>vh*.9){h=vh*.9;w=h*AR}return{x:(vw-w)/2,y:(vh-h)/2,w,h}}
+function toBlob(cv){return new Promise(r=>cv.toBlob(r,'image/jpeg',.9))}
+function setup(side){
+ const root=$('#cam'+side),v=root.querySelector('video'),img=root.querySelector('img'),view=root.querySelector('.view'),fr=root.querySelector('.frame'),st=root.querySelector('.cst'),fi=root.querySelector('input[type=file]');
+ const btn=a=>root.querySelector(`[data-a=${a}]`);let stream=null;
+ const stopCam=()=>{if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;root.classList.remove('live')};
+ const done=(blob,url)=>{IMG[side]=blob;img.src=url;root.classList.add('done');stopCam();btn('snap').disabled=true;btn('retake').disabled=false;st.textContent='Map captured.';ready(true)};
+ btn('start').onclick=async()=>{
+  st.textContent='Starting camera...';
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1440}},audio:false});
+   v.srcObject=stream;await v.play();root.classList.remove('done');
+   const vw=v.videoWidth,vh=v.videoHeight,g=guide(vw,vh);view.style.aspectRatio=vw+'/'+vh;
+   Object.assign(fr.style,{left:g.x/vw*100+'%',top:g.y/vh*100+'%',width:g.w/vw*100+'%',height:g.h/vh*100+'%'});
+   root.classList.add('live');btn('snap').disabled=false;st.textContent='Hold steady, line up the corners, then capture.'}
+  catch(e){st.textContent='This view cannot open the camera. Use Upload photo, which can open your camera app.'}};
+ btn('snap').onclick=async()=>{
+  const vw=v.videoWidth,vh=v.videoHeight,g=guide(vw,vh),sc=Math.min(1,2000/g.w),cv=document.createElement('canvas');
+  cv.width=Math.round(g.w*sc);cv.height=Math.round(g.h*sc);cv.getContext('2d').drawImage(v,g.x,g.y,g.w,g.h,0,0,cv.width,cv.height);
+  const f=root.querySelector('.flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+  const b=await toBlob(cv);done(b,URL.createObjectURL(b))};
+ btn('retake').onclick=()=>{IMG[side]=null;root.classList.remove('done');btn('retake').disabled=true;st.textContent='';ready();btn('start').click()};
+ btn('up').onclick=()=>fi.click();
+ fi.onchange=async()=>{const f=fi.files[0];if(!f)return;const bm=await createImageBitmap(f),sc=Math.min(1,2000/Math.max(bm.width,bm.height)),cv=document.createElement('canvas');
+  cv.width=Math.round(bm.width*sc);cv.height=Math.round(bm.height*sc);cv.getContext('2d').drawImage(bm,0,0,cv.width,cv.height);const b=await toBlob(cv);done(b,URL.createObjectURL(b));fi.value=''};
+
+}
+setup('u');setup('c');
+const ready=t=>{const ok=!!(IMG.u&&IMG.c);$('#go').disabled=!ok||busy;if(t&&ok&&!busy&&$('#auto').checked)setTimeout(()=>{if(IMG.u&&IMG.c&&!busy)analyze()},600)};
+
+/* ---------- gritty analysis animation ---------- */
+function scene(){
+ const cv=$('#scene canvas'),x=cv.getContext('2d'),W=cv.width,H=cv.height;let t=0,raf,smoke=[],fl=0,fx=0;
+ const say=['Unrolling the maps...','Counting the infantry...','Checking who holds the high ground...','Tracing the lines of advance...','Listening for cannon fire...','Reading the dispatches...'];
+ let si=0;const iv=setInterval(()=>{$('#stat').textContent=say[++si%say.length]},2200);
+ function man(px,py,dir,col,ph){x.save();x.translate(px,py);x.scale(dir,1);x.fillStyle=col;x.strokeStyle=col;const b=Math.sin(ph)*3;
+  x.beginPath();x.arc(0,-46+b,6,0,7);x.fill();x.fillRect(-8,-50+b,16,4);x.fillRect(-3,-52+b,12,3);
+  x.fillRect(-7,-40+b,14,24);x.lineWidth=5;x.beginPath();x.moveTo(-4,-16+b);x.lineTo(-6+Math.sin(ph)*6,0);x.moveTo(4,-16+b);x.lineTo(6-Math.sin(ph)*6,0);x.stroke();
+  x.lineWidth=3;x.beginPath();x.moveTo(-2,-34+b);x.lineTo(26,-52+b);x.stroke();x.lineWidth=1.5;x.beginPath();x.moveTo(26,-52+b);x.lineTo(36,-58+b);x.stroke();x.restore()}
+ function frame(){t+=.05;
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#2a2117');g.addColorStop(.7,'#6a5233');g.addColorStop(1,'#3a2c1c');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle='rgba(240,200,120,.10)';x.beginPath();x.arc(W*.78,H*.30,70+Math.sin(t)*3,0,7);x.fill();
+  x.fillStyle='#1a140d';x.beginPath();x.moveTo(0,H*.62);for(let i=0;i<=W;i+=40)x.lineTo(i,H*.62-Math.sin(i*.013+1)*18-Math.sin(i*.03)*6);x.lineTo(W,H);x.lineTo(0,H);x.fill();
+  for(let r=0;r<2;r++){const dir=r?-1:1,col=r?'#4a1a14':'#14243d',y=H*(r?.93:.80);for(let i=0;i<9;i++){const px=((i*130+t*55*dir)%(W+160)+(W+160))%(W+160)-80;man(px,y,dir,col,t*3+i)}}
+  if(Math.random()<.018){fx=Math.random()*W*.8+W*.1;fl=1;for(let i=0;i<14;i++)smoke.push({x:fx,y:H*.58,vx:(Math.random()-.5)*1.2,vy:-Math.random()*1.4,r:10+Math.random()*16,a:.5})}
+  if(Math.random()<.4)smoke.push({x:Math.random()*W,y:H*.9,vx:.3,vy:-.5,r:14,a:.12});
+  smoke=smoke.filter(s=>s.a>.01);smoke.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.r+=.35;s.a*=.985;x.fillStyle=`rgba(190,175,150,${s.a})`;x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill()});
+  if(fl>.02){const q=x.createRadialGradient(fx,H*.58,0,fx,H*.58,160*fl+20);q.addColorStop(0,`rgba(255,230,150,${fl})`);q.addColorStop(1,'rgba(255,120,30,0)');x.fillStyle=q;x.fillRect(0,0,W,H);x.fillStyle=`rgba(255,240,200,${fl*.12})`;x.fillRect(0,0,W,H);fl*=.88}
+  x.fillStyle='rgba(0,0,0,.35)';const v=x.createRadialGradient(W/2,H/2,H*.3,W/2,H/2,W*.65);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.65)');x.fillStyle=v;x.fillRect(0,0,W,H);
+  raf=requestAnimationFrame(frame)}
+ frame();return()=>{cancelAnimationFrame(raf);clearInterval(iv)}}
+
+/* ---------- Claude analysis ---------- */
+const PROMPT=`You are an expert Civil War teacher scoring two student battle plans for a classroom game called War Room.
+Image 1 is the UNION group's map sheet. Image 2 is the CONFEDERATE group's map sheet. Students place physical pieces, stickers or drawn symbols on the printed battlefield map and draw arrows. An arrow's head shows the direction the army is moving. Students may also write notes, including a Plan B.
+Piece shapes (judge by SHAPE, whatever the color or material): infantry = rectangle or bar, cavalry = TRIANGLE, artillery = CIRCLE or round dot. Pieces may be stickers, tokens, cut-outs or drawn marks. IGNORE the small printed icons in the Infantry/Cavalry/Artillery table under the map and any legend. Only count pieces sitting on the map itself, including ones on top of forests, hills, water or arrows.
+STEP 1. Read the battle title printed on the map: First Bull Run, Antietam, Gettysburg or Vicksburg, else "Unknown".
+STEP 2. Count carefully, because small shapes are easy to miss. Sweep the map in four quadrants (NW, NE, SW, SE). In each quadrant list every rectangle, every triangle and every circle you can find, hunting specifically for triangles and circles. Then add the quadrants together for the totals. Count partly overlapping pieces separately. If a shape is unclear, count your best reading and add a flag.
+Expected counts (infantry/cavalry/artillery): Bull Run Union 14/1/5, Confederate 10/1/5 plus 2 infantry arriving by rail. Antietam Union 16/2/7, Confederate 8/1/5 plus 2 infantry reinforcements. Gettysburg Union 18/3/7, Confederate 15/2/7. Vicksburg Union 18/1/8, Confederate 8/1/7.
+STEP 3. List each arrow you can see: where it starts, where it ends (name map features such as towns, hills, woods, creeks, bridges), the compass direction of travel (N, NE, E, SE, S, SW, W, NW), and the purpose it appears to serve.
+STEP 4. Consider each side's real advantages in this battle, then judge how well the group used them and covered its weaknesses:
+${Object.values(B).map(b=>b.n+' - '+b.adv).join('\n')}
+STEP 5. Score each side 0 to 4 (4 strong, 2 okay, 0 missing) on these six criteria, in this order:
+1 Objective and Plan: placement and arrows clearly serve the side's goal and show a strategy (direct attack, flank, defense, feint).
+2 Terrain Use: pieces and arrows use hills, woods, creeks, bridges and roads on purpose.
+3 Force Placement: every piece is placed and each unit type fits its role (artillery supporting from high ground, cavalry scouting or flanking, infantry holding or attacking).
+4 Movement and Coordination: arrows show clear direction, timing or phases, and units support one another.
+5 Using Your Advantages: the plan exploits the side's advantages and protects against its weaknesses.
+6 Intel and Plan B: written notes or marks show the group used its intelligence and prepared a fallback. If no writing is visible, score no higher than 1.
+Name the group's single biggest success and up to three problems, each in 12 words or fewer. Be fair and consistent between the two sides. If a photo is blurry, cropped or unclear, say so in flags and score cautiously.
+Write for students: specific, kind and useful. For each criterion give one sentence of evidence from the photo and one concrete tip for the NEXT battle. In every sentence you write (evidence, tips, terrain, forces, advantage, success, problems), wrap the key phrase of a PROBLEM in [[double square brackets]] and the key phrase of a SUCCESS in {{double curly braces}} so it can be underlined.
+Return ONLY JSON, no markdown fences, in exactly this shape (both sides use the same shape; each tally entry is [rectangles, triangles, circles]):
+{"battle":"Antietam","union":{"scores":[0,0,0,0,0,0],"tally":{"NW":[0,0,0],"NE":[0,0,0],"SW":[0,0,0],"SE":[0,0,0]},"counts":{"infantry":0,"cavalry":0,"artillery":0},"success":"","problems":["up to three"],"arrows":[{"from":"","to":"","dir":"NE","purpose":""}],"terrain":"2 sentences on how the group used terrain","forces":"2 sentences on how it used infantry, cavalry and artillery","advantage":"2 sentences on the advantages it had and whether it used them","evidence":["six sentences"],"tips":["six sentences"],"strengths":["two short strengths"],"flags":[]},"confederate":{same shape}}`;
+function findKey(n){n=(n||'').toLowerCase();return Object.keys(B).find(k=>n.includes(B[k].n.toLowerCase().split(' ').pop()))}
+const fix=a=>Array.from({length:6},(_,i)=>Math.max(0,Math.min(4,Math.round(+(a||[])[i]||0))));
+const tl=d=>{const t=d.tally;if(!t||typeof t!=='object')return d.counts||{};let a=[0,0,0];Object.values(t).forEach(q=>{if(Array.isArray(q))q.forEach((n,i)=>{if(i<3)a[i]+=Math.max(0,+n||0)})});const c=d.counts||{};const sum=a[0]+a[1]+a[2];return sum?{infantry:Math.max(a[0],+c.infantry||0),cavalry:Math.max(a[1],+c.cavalry||0),artillery:Math.max(a[2],+c.artillery||0)}:c};
+const side=d=>({su:d.success||'',pr:Array.isArray(d.problems)?d.problems.slice(0,3):[],s:fix(d.scores),cn:tl(d),ar:Array.isArray(d.arrows)?d.arrows:[],tr:d.terrain||'',fo:d.forces||'',ad:d.advantage||'',ev:d.evidence||[],tp:d.tips||[],st:d.strengths||[],fl:d.flags||[]});
+async function analyze(){
+ if(busy)return;msg('');const sample=await claude.use('sample');
+ if(!sample){msg('Scanning needs this page opened inside Claude. You can still score by hand below.');return}
+ busy=true;$('#res').style.display='none';$('#scene').style.display='block';$('#scene').scrollIntoView({behavior:'smooth',block:'center'});stopScene=scene();
+ document.querySelectorAll('.view').forEach(v=>v.classList.add('scan'));$('#go').disabled=true;ctl=new AbortController();
+ try{
+  const d=await sample.json(PROMPT,{images:[IMG.u,IMG.c],modelTier:'complex',cache:false,signal:ctl.signal});
+  const sel=$('#bat').value;key=sel!=='auto'?sel:(findKey(d.battle)||'ant');
+  R={u:side(d.union),c:side(d.confederate),battle:d.battle};end();show();
+ }catch(e){end();
+  const m={not_granted:'Scanning was not allowed. Allow Claude when asked, or score by hand.',rate_limited:'Too many scans at once. Wait a moment and try again.',images_unavailable:'This viewer cannot send photos to Claude. Score by hand instead.',cancelled:'Scan stopped.'};
+  msg(m[e&&e.code]||'The scan did not come back readable. Retake the photos with the whole map in the frame and try again.')}
+}
+function end(){busy=false;if(stopScene)stopScene();stopScene=null;$('#scene').style.display='none';document.querySelectorAll('.view').forEach(v=>v.classList.remove('scan'));ready()}
+$('#go').onclick=analyze;$('#stop').onclick=()=>{if(ctl)ctl.abort()};
+$('#manual').onclick=()=>{const sel=$('#bat').value;key=sel==='auto'?'ant':sel;const z=()=>({su:'',pr:[],s:[2,2,2,2,2,2],cn:{},ar:[],tr:'',fo:'',ad:'',ev:[],tp:[],st:[],fl:[]});R={u:z(),c:z(),battle:B[key].n};R.u.fl=['Scored by hand. Use the plus and minus buttons on each criterion.'];show()};
+
+/* ---------- simulation + win bar ---------- */
+function sim(){
+ const ed=$('#edge').checked,fog=$('#fog').checked,E=B[key];let cu=0,cc=0;const steps=[],ph=[];
+ PH.forEach(p=>{const o={};['u','c'].forEach(s=>{const base=p.i.reduce((a,i)=>a+R[s].s[i],0),eg=ed&&p.e?E[s][p.e]:0,d=1+Math.floor(Math.random()*6),f=fog?(d<=2?-1:d>=5?1:0):0,db=p.db?+$('#d'+s).value-2:0;o[s]=Math.max(0,base+eg+f+db)});
+  cu+=o.u;cc+=o.c;steps.push(cu/Math.max(1,cu+cc));ph.push({n:p.n,w:o.u>o.c?'u':o.c>o.u?'c':'d',u:o.u,c:o.c})});
+ return{steps,ph,share:steps[2]}}
+const tween=(a,b,ms,cb)=>new Promise(r=>{const t0=performance.now(),id=++anim;(function f(n){if(id!==anim)return r();const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;cb(a+(b-a)*e);k<1?requestAnimationFrame(f):r()})(t0)});
+function setBar(s){$('#bu').style.width=s*100+'%';$('#mk').style.left=s*100+'%';$('#pu').textContent=Math.round(s*100)+'%';$('#pc').textContent=Math.round((1-s)*100)+'%'}
+async function play(){
+ const S=sim();let cur=.5;setBar(.5);$('#chips').innerHTML=S.ph.map(p=>`<span class="chip">${p.n}</span>`).join('');$('#stamp').innerHTML='';$('#close').textContent='The lines meet...';
+ const chips=[...document.querySelectorAll('.chip')];
+ for(let i=0;i<3;i++){const tgt=S.steps[i],over=Math.max(.04,Math.min(.96,tgt+(Math.random()-.5)*.12));
+  await tween(cur,over,700,setBar);await tween(over,tgt,450,setBar);cur=tgt;chips[i].classList.add('on',S.ph[i].w==='u'?'wu':S.ph[i].w==='c'?'wc':'x');
+  chips[i].textContent=`${S.ph[i].n}: ${S.ph[i].w==='d'?'even':(S.ph[i].w==='u'?nm('u'):nm('c'))} (${S.ph[i].u} to ${S.ph[i].c})`;await new Promise(r=>setTimeout(r,350))}
+ const w=S.share>.5?'u':S.share<.5?'c':null,gap=Math.abs(S.share-.5)*200,lab=gap<6?'Knife-edge':gap<16?'Close fight':gap<32?'Clear win':'Rout';
+ $('#stamp').innerHTML=w?`<div class="stamp ${w}">${w==='u'?'UNION':'CONFEDERATE'}<br>VICTORY<small>${nm(w)}</small></div>`:`<div class="stamp d">STALEMATE</div>`;
+ $('#close').textContent=`${lab}. Final win score ${Math.round(S.share*100)} to ${Math.round((1-S.share)*100)}, a gap of ${Math.round(gap)} points.`}
+const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const fmt=t=>esc(t).replace(/\[\[(.+?)\]\]/g,'<u class="bad">$1</u>').replace(/\{\{(.+?)\}\}/g,'<u class="good">$1</u>');
+function card(s){
+ const r=R[s],n=s==='u'?'Union':'Confederate',x=B[key].x[s],ex=B[key].ex[s],c=r.cn,v=[+c.infantry||0,+c.cavalry||0,+c.artillery||0],L=['Infantry','Cavalry','Artillery'];
+ const tiles=v.map((k,i)=>{const hi=x[i]+(i===0?ex:0),ok=k>=x[i]&&k<=hi,exp=hi>x[i]?`${x[i]}-${hi}`:x[i];return `<div class="pc ${R[s].cn.infantry===undefined?'':ok?'ok':'no'}"><b>${k}</b><small>${L[i]} seen<br>expected ${exp}</small><span class="adj"><button type="button" data-s="${s}" data-k="${i}" data-d="-1" aria-label="One fewer ${L[i]}">&minus;</button><button type="button" data-s="${s}" data-k="${i}" data-d="1" aria-label="One more ${L[i]}">+</button></span></div>`}).join('');
+ const total=v[0]+v[1]+v[2];
+ return `<div class="sd ${s}"><h3>${n}: ${esc(nm(s))}</h3>${r.su||r.pr.length?`<div class="sum">${r.su?`<div class="ms"><b>Major success</b> <u class="good">${fmt(r.su).replace(/<\/?u[^>]*>/g,'')}</u></div>`:''}${r.pr.map(q=>`<div class="mp"><b>Problem</b> <u class="bad">${fmt(q).replace(/<\/?u[^>]*>/g,'')}</u></div>`).join('')}</div>`:''}<h4>Pieces the scanner can see: ${total}</h4><div class="pcs">${tiles}</div>
+ <h4>Movement arrows (${r.ar.length})</h4>${r.ar.length?`<ul>${r.ar.map(a=>`<li><span class="dir">${esc(a.dir)}</span>${esc(a.from)} to ${esc(a.to)}. ${esc(a.purpose)}</li>`).join('')}</ul>`:'<p>No arrows detected.</p>'}
+ ${r.tr?`<h4>How they used the terrain</h4><p>${fmt(r.tr)}</p>`:''}${r.fo?`<h4>How they used their forces</h4><p>${fmt(r.fo)}</p>`:''}${r.ad?`<h4>Advantages</h4><p>${fmt(r.ad)}</p>`:''}
+ <h4>Scores and how to improve</h4>`+CR.map((q,i)=>`<div class="cr"><div><b>${q}</b></div><div class="sc2"><button type="button" data-s="${s}" data-i="${i}" data-d="-1" aria-label="Lower ${q}">&minus;</button><b>${r.s[i]}</b>/4<button type="button" data-s="${s}" data-i="${i}" data-d="1" aria-label="Raise ${q}">+</button></div>${r.ev[i]||r.tp[i]?`<div class="tp">${fmt(r.ev[i])} ${r.tp[i]?`<em>Next battle:</em> ${fmt(r.tp[i])}`:''}</div>`:''}</div>`).join('')+
+ `<h4>Total</h4><p><b>${r.s.reduce((a,b)=>a+b,0)} / 24</b>${r.st.length?` &middot; Strengths: ${r.st.map(esc).join('; ')}`:''}</p></div>`}
+function show(){
+ $('#rt').textContent=`${B[key].n}: battle report`;$('#lu').textContent=nm('u');$('#lc').textContent=nm('c');
+ $('#flags').innerHTML=['u','c'].flatMap(s=>R[s].fl.map(f=>`<div class="flag">${s==='u'?'Union':'Confederate'}: ${esc(f)}</div>`)).join('');
+ $('#real').style.display='none';$('#real').textContent=B[key].real;draw();
+ $('#res').style.display='block';$('#res').scrollIntoView({behavior:'smooth',block:'start'});play()}
+const draw=()=>{$('#sides').innerHTML=card('u')+card('c')};
+$('#sides').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.k!==undefined){const c=R[b.dataset.s].cn,f=['infantry','cavalry','artillery'][+b.dataset.k];c[f]=Math.max(0,(+c[f]||0)+ +b.dataset.d);draw();return}const a=R[b.dataset.s].s,i=+b.dataset.i;a[i]=Math.max(0,Math.min(4,a[i]+ +b.dataset.d));draw()};
+$('#replay').onclick=play;$('#reveal').onclick=()=>{const r=$('#real');r.style.display=r.style.display==='block'?'none':'block'};
+['nu','nc'].forEach(i=>$('#'+i).oninput=()=>{if(R){$('#lu').textContent=nm('u');$('#lc').textContent=nm('c');draw()}});
+</script>
+</body>
+</html>
